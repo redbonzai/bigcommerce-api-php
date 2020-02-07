@@ -4,8 +4,9 @@ namespace Bigcommerce\Test\Unit\Api;
 
 use Bigcommerce\Api\Client;
 use Bigcommerce\Api\Connection;
+use PHPUnit\Framework\TestCase;
 
-class ClientTest extends \PHPUnit_Framework_TestCase
+class ClientTest extends TestCase
 {
     /**
      * @var Connection|\PHPUnit_Framework_MockObject_MockObject
@@ -52,19 +53,22 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testConfigureRequiresStoreUrl()
     {
-        $this->setExpectedException('\\Exception', "'store_url' must be provided");
+        $this->expectException('\\Exception');
+        $this->expectExceptionMessage("'store_url' must be provided");
         Client::configure(array('username' => 'whatever', 'api_key' => 'whatever'));
     }
 
     public function testConfigureRequiresUsername()
     {
-        $this->setExpectedException('\\Exception', "'username' must be provided");
+        $this->expectException('\\Exception');
+        $this->expectExceptionMessage("'username' must be provided");
         Client::configure(array('store_url' => 'whatever', 'api_key' => 'whatever'));
     }
 
     public function testConfigureRequiresApiKey()
     {
-        $this->setExpectedException('\\Exception', "'api_key' must be provided");
+        $this->expectException('\\Exception');
+        $this->expectExceptionMessage("'api_key' must be provided");
         Client::configure(array('username' => 'whatever', 'store_url' => 'whatever'));
     }
 
@@ -144,7 +148,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             'auth_token' => 'def',
             'store_hash' => 'abc'
         ));
-        $this->setExpectedException('\Exception', 'Cannot sign customer login tokens without a client secret');
+        $this->expectException('\Exception');
+        $this->expectExceptionMessage('Cannot sign customer login tokens without a client secret');
         Client::getCustomerLoginToken(1);
     }
 
@@ -239,7 +244,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             ->with($this->basePath . '/time', false)
             ->will($this->returnValue((object)array('time' => $now->format('U'))));
 
-        $this->assertEquals($now, Client::getTime());
+        $this->assertEquals($now->format('U'), Client::getTime()->format('U'));
     }
 
     public function testGetStoreReturnsTheResultBodyDirectly()
@@ -417,9 +422,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->connection->expects($this->once())
             ->method('put')
-            ->with($this->basePath . '/product/skus/1', (object)array());
+            ->with($this->basePath . '/products/skus/1', (object)array());
 
         Client::updateSku(1, array());
+    }
+
+    public function testGettingProductGoogleProductSearch()
+    {
+        $this->connection->expects($this->once())
+          ->method('get')
+          ->with($this->basePath . '/products/1/googleproductsearch')
+          ->will($this->returnValue((object)array()));
+
+        $resource = Client::getGoogleProductSearch(1);
+        $this->assertInstanceOf('Bigcommerce\\Api\\Resources\\ProductGoogleProductSearch', $resource);
     }
 
     public function testGettingProductImagesReturnsCollectionOfProductImages()
@@ -438,7 +454,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->connection->expects($this->once())
             ->method('get')
-            ->with($this->basePath . '/products/1/customfields/', false)
+            ->with($this->basePath . '/products/1/custom_fields', false)
             ->will($this->returnValue(array(array(), array())));
 
         $collection = Client::getProductCustomFields(1);
@@ -463,7 +479,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->connection->expects($this->once())
             ->method('get')
-            ->with($this->basePath . '/products/1/customfields/1', false)
+            ->with($this->basePath . '/products/1/custom_fields/1', false)
             ->will($this->returnValue(array(array(), array())));
 
         $resource = Client::getProductCustomField(1, 1);
@@ -549,7 +565,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->connection->expects($this->once())
             ->method('post')
-            ->with($this->basePath . '/products/1/customfields', (object)array());
+            ->with($this->basePath . '/products/1/custom_fields', (object)array());
 
         Client::createProductCustomField(1, array());
     }
@@ -567,7 +583,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->connection->expects($this->once())
             ->method('put')
-            ->with($this->basePath . '/products/1/customfields/1', (object)array());
+            ->with($this->basePath . '/products/1/custom_fields/1', (object)array());
 
         Client::updateProductCustomField(1, 1, array());
     }
@@ -585,7 +601,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->connection->expects($this->once())
             ->method('delete')
-            ->with($this->basePath . '/products/1/customfields/1');
+            ->with($this->basePath . '/products/1/custom_fields/1');
 
         Client::deleteProductCustomField(1, 1);
     }
@@ -841,8 +857,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         Client::deleteAllGiftCertificates();
     }
-    
-    
+
+
     public function testGettingWebhooksReturnsAllWebhooks()
     {
         $this->connection->expects($this->once())
@@ -855,7 +871,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             $this->assertInstanceOf('Bigcommerce\\Api\\Resource', $resource);
         }
     }
-    
+
     public function testGettingSpecifiedWebhookReturnsTheSpecifiedWebhook()
     {
         $this->connection->expects($this->once())
@@ -865,7 +881,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $resource = Client::getWebhook(1);
         $this->assertInstanceOf('Bigcommerce\\Api\\Resource', $resource);
     }
-    
+
     public function testCreatingWebhookPostsToTheSpecifiedResource()
     {
         $this->connection->expects($this->once())
@@ -880,7 +896,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             ->with($this->basePath . '/hooks/1', (object)array());
         Client::updateWebhook(1, array());
     }
-    
+
     public function testDeleteWebhookDeletesToTheSpecifiedResource()
     {
         $this->connection->expects($this->once())

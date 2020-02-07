@@ -6,8 +6,8 @@ use Bigcommerce\Api\Resource;
 use Bigcommerce\Api\Client;
 
 /**
- * An option.
+ * A product review.
  */
-class TaxClass extends Resource
+class ProductGoogleProductSearch extends Resource
 {
 }

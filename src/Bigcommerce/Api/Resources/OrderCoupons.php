@@ -5,9 +5,6 @@ namespace Bigcommerce\Api\Resources;
 use Bigcommerce\Api\Resource;
 use Bigcommerce\Api\Client;
 
-/**
- * An option.
- */
-class TaxClass extends Resource
+class OrderCoupons extends Resource
 {
 }

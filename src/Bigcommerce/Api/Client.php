@@ -15,56 +15,56 @@ class Client
      *
      * @var string
      */
-    static private $store_url;
+    private static $store_url;
 
     /**
      * Username to connect to the store API with
      *
      * @var string
      */
-    static private $username;
+    private static $username;
 
     /**
      * API key
      *
      * @var string
      */
-    static private $api_key;
+    private static $api_key;
 
     /**
      * Connection instance
      *
      * @var Connection
      */
-    static private $connection;
+    private static $connection;
 
     /**
      * Resource class name
      *
      * @var string
      */
-    static private $resource;
+    private static $resource;
 
     /**
      * API path prefix to be added to store URL for requests
      *
      * @var string
      */
-    static private $path_prefix = '/api/v2';
+    private static $path_prefix = '/api/v2';
 
     /**
      * Full URL path to the configured store API.
      *
      * @var string
      */
-    static public $api_path;
-    static private $client_id;
-    static private $store_hash;
-    static private $auth_token;
-    static private $client_secret;
-    static private $stores_prefix = '/stores/%s/v2';
-    static private $api_url = 'https://api.bigcommerce.com';
-    static private $login_url = 'https://login.bigcommerce.com';
+    public static $api_path;
+    private static $client_id;
+    private static $store_hash;
+    private static $auth_token;
+    private static $client_secret;
+    private static $stores_prefix = '/stores/%s/v2';
+    private static $api_url = 'https://api.bigcommerce.com';
+    private static $login_url = 'https://login.bigcommerce.com';
 
     /**
      * Configure the API client with the required settings to access
@@ -384,7 +384,6 @@ class Client
 
         $baseResource = __NAMESPACE__ . '\\' . $resource;
         $class = (class_exists($baseResource)) ? $baseResource : 'Bigcommerce\\Api\\Resources\\' . $resource;
-
         return new $class($object);
     }
 
@@ -406,7 +405,7 @@ class Client
     /**
      * Swaps a temporary access code for a long expiry auth token.
      *
-     * @param \stdClass $object
+     * @param \stdClass|array $object
      * @return \stdClass
      */
     public static function getAuthToken($object)
@@ -417,6 +416,12 @@ class Client
         return $connection->post(self::$login_url . '/oauth2/token', $context);
     }
 
+    /**
+     * @param int $id
+     * @param string $redirectUrl
+     * @param string $requestIp
+     * @return string
+     */
     public static function getCustomerLoginToken($id, $redirectUrl = '', $requestIp = '')
     {
         if (empty(self::$client_secret)) {
@@ -490,7 +495,7 @@ class Client
      */
     public static function getProductCustomFields($id)
     {
-        return self::getCollection('/products/' . $id . '/customfields/', 'ProductCustomField');
+        return self::getCollection('/products/' . $id . '/custom_fields', 'ProductCustomField');
     }
 
     /**
@@ -501,7 +506,7 @@ class Client
      */
     public static function getProductCustomField($product_id, $id)
     {
-        return self::getResource('/products/' . $product_id . '/customfields/' . $id, 'ProductCustomField');
+        return self::getResource('/products/' . $product_id . '/custom_fields/' . $id, 'ProductCustomField');
     }
 
     /**
@@ -513,7 +518,7 @@ class Client
      */
     public static function createProductCustomField($product_id, $object)
     {
-        return self::createResource('/products/' . $product_id . '/customfields', $object);
+        return self::createResource('/products/' . $product_id . '/custom_fields', $object);
     }
 
     /**
@@ -537,7 +542,7 @@ class Client
      */
     public static function updateProductCustomField($product_id, $id, $object)
     {
-        return self::updateResource('/products/' . $product_id . '/customfields/' . $id, $object);
+        return self::updateResource('/products/' . $product_id . '/custom_fields/' . $id, $object);
     }
 
     /**
@@ -549,7 +554,7 @@ class Client
      */
     public static function deleteProductCustomField($product_id, $id)
     {
-        return self::deleteResource('/products/' . $product_id . '/customfields/' . $id);
+        return self::deleteResource('/products/' . $product_id . '/custom_fields/' . $id);
     }
 
     /**
@@ -1208,7 +1213,7 @@ class Client
      */
     public static function updateSku($id, $object)
     {
-        return self::updateResource('/product/skus/' . $id, $object);
+        return self::updateResource('/products/skus/' . $id, $object);
     }
 
     /**
@@ -1219,6 +1224,16 @@ class Client
     public static function getSkusCount()
     {
         return self::getCount('/products/skus/count');
+    }
+
+    /**
+     * Returns the googleproductsearch mapping for a product.
+     *
+     * @return Resources\ProductGoogleProductSearch
+     */
+    public static function getGoogleProductSearch($productId)
+    {
+        return self::getResource('/products/' . $productId . '/googleproductsearch', 'ProductGoogleProductSearch');
     }
 
     /**
@@ -1321,7 +1336,7 @@ class Client
      */
     public static function getRequestsRemaining()
     {
-        $limit = self::connection()->getHeader('X-BC-ApiLimit-Remaining');
+        $limit = self::connection()->getHeader('X-Rate-Limit-Requests-Left');
 
         if (!$limit) {
             $result = self::getTime();
@@ -1330,7 +1345,7 @@ class Client
                 return false;
             }
 
-            $limit = self::connection()->getHeader('X-BC-ApiLimit-Remaining');
+            $limit = self::connection()->getHeader('X-Rate-Limit-Requests-Left');
         }
 
         return (int)$limit;
@@ -1407,6 +1422,19 @@ class Client
     public static function deleteAllShipmentsForOrder($orderID)
     {
         return self::deleteResource('/orders/' . $orderID . '/shipments');
+    }
+
+    /**
+     * Get order coupons for a given order
+     *
+     * @param $orderID
+     * @param array $filter
+     * @return mixed
+     */
+    public static function getOrderCoupons($orderID, $filter = array())
+    {
+        $filter = Filter::create($filter);
+        return self::getCollection('/orders/' . $orderID . '/coupons' . $filter->toQuery(), 'OrderCoupons');
     }
 
     /**
@@ -1888,7 +1916,7 @@ class Client
             $object
         );
     }
-    
+
     /**
      * Returns all webhooks.
      *
@@ -1898,7 +1926,7 @@ class Client
     {
         return self::getCollection('/hooks');
     }
-    
+
     /**
      * Returns data for a specific web-hook.
      *
@@ -1909,7 +1937,7 @@ class Client
     {
         return self::getResource('/hooks/' . $id);
     }
-    
+
     /**
      * Creates a web-hook.
      *
@@ -1920,7 +1948,7 @@ class Client
     {
         return self::createResource('/hooks', $object);
     }
-    
+
     /**
      * Updates the given webhook.
      *
@@ -1932,7 +1960,7 @@ class Client
     {
         return self::updateResource('/hooks/' . $id, $object);
     }
-    
+
     /**
      * Delete the given webhook.
      *
@@ -1951,7 +1979,7 @@ class Client
      */
     public static function getShippingZones()
     {
-        return self::getCollection('/shipping/zones/', 'ShippingZone');
+        return self::getCollection('/shipping/zones', 'ShippingZone');
     }
 
     /**
@@ -2011,5 +2039,18 @@ class Client
     public static function deleteShippingMethod($zoneId, $methodId)
     {
         return self::deleteResource('/shipping/zones/'. $zoneId . '/methods/'. $methodId);
+    }
+
+    /**
+     * Get collection of product skus by Product
+     *
+     * @param $productId
+     * @param array $filter
+     * @return mixed
+     */
+    public static function getSkusByProduct($productId, $filter = array())
+    {
+        $filter = Filter::create($filter);
+        return self::getCollection('/products/'.$productId.'/skus' . $filter->toQuery(), 'Sku');
     }
 }
